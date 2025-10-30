@@ -6,16 +6,33 @@ if (!MONGODB_URI) {
   throw new Error("MONGODB_URI is not set. Add it to env.local");
 }
 
-let cached = (global as unknown as { mongoose?: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } }).mongoose;
+let cached = (
+  global as unknown as {
+    mongoose?: {
+      conn: typeof mongoose | null;
+      promise: Promise<typeof mongoose> | null;
+    };
+  }
+).mongoose;
 
 if (!cached) {
-  cached = (global as unknown as { mongoose: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } }).mongoose = {
+  cached = (
+    global as unknown as {
+      mongoose: {
+        conn: typeof mongoose | null;
+        promise: Promise<typeof mongoose> | null;
+      };
+    }
+  ).mongoose = {
     conn: null,
     promise: null,
   };
 }
 
 export async function connectToDatabase(): Promise<typeof mongoose> {
+  if (!cached) {
+    throw new Error("Mongoose cache (global.mongoose) not initialized.");
+  }
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
@@ -28,5 +45,3 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   cached.conn = await cached.promise;
   return cached.conn;
 }
-
-
