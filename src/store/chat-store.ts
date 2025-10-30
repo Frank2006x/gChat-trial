@@ -11,11 +11,12 @@ interface ChatStore {
   messages: ChatMessage[];
   isLoading: boolean;
   hasError: boolean;
-  sendMessage: (msg: { text: string; author?: string }) => Promise<void>;
+  sendMessage: (msg: { text: string; author: string }) => Promise<void>;
   fetchMessages: () => Promise<void>;
+  appendMessage: (msg: ChatMessage) => void;
 }
 
-export const useChatStore = create<ChatStore>((set) => ({
+export const useChatStore = create<ChatStore>((set, get) => ({
   messages: [],
   isLoading: false,
   hasError: false,
@@ -23,6 +24,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     set({ isLoading: true, hasError: false });
     try {
       const res = await fetch("/api/messages");
+      if (!res.ok) throw new Error();
       const data = await res.json();
       set({
         messages: data.messages || [],
@@ -50,5 +52,10 @@ export const useChatStore = create<ChatStore>((set) => ({
     } catch (e) {
       set({ isLoading: false, hasError: true });
     }
+  },
+  appendMessage(msg) {
+    const exists = get().messages.some((m) => m._id === msg._id);
+    if (exists) return;
+    set((state) => ({ messages: [...state.messages, msg] }));
   },
 }));

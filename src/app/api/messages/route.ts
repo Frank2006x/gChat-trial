@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Message } from "@/models/message";
+import { getIO } from "@/lib/socket-io";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -32,6 +33,11 @@ export async function POST(req: NextRequest) {
   await connectToDatabase();
 
   const created = await Message.create({ author, text });
+  try {
+    const io = getIO?.();
+    // io may be undefined if socket server hasn't been initialised yet
+    io?.emit("chat message", created);
+  } catch {}
   return NextResponse.json({ message: created }, { status: 201 });
 }
 
